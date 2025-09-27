@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таймер до встречи мышонышей</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ffafbd, #ffc3a0);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            color: #8a2b5c;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Статичные сердечки на фоне */
+        .static-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .static-heart {
+            position: absolute;
+            opacity: 0.15;
+            font-size: 24px;
+            color: #ff6b9d;
+        }
+
+        .container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #d63384;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #a64d79;
+        }
+
+        .timer-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #d63384;
+            border-bottom: 2px solid #ffafbd;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        .timer {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .time-unit {
+            background: linear-gradient(145deg, #ffafbd, #ffc3a0);
+            padding: 20px;
+            border-radius: 15px;
+            min-width: 140px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .time-unit:hover {
+            transform: translateY(-5px);
+        }
+
+        .time-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #8a2b5c;
+        }
+
+        .time-label {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            color: #d63384;
+        }
+
+        .full-duration {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .duration-unit {
+            background: linear-gradient(145deg, #e6b3cc, #f0c8a8);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .duration-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #8a2b5c;
+            margin-bottom: 5px;
+        }
+
+        .duration-label {
+            font-size: 1rem;
+            color: #d63384;
+        }
+
+        #image-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        #romantic-image {
+            max-width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .hearts-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            display: none;
+        }
+
+        .heart {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff6b9d;
+            transform: rotate(45deg);
+            opacity: 0.8;
+        }
+
+        .heart:before, .heart:after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: #ff6b9d;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .heart:before {
+            top: -10px;
+            left: 0;
+        }
+
+        .heart:after {
+            top: 0;
+            left: -10px;
+        }
+
+        .message {
+            font-size: 1.8rem;
+            margin-top: 20px;
+            color: #d63384;
+            display: none;
+            font-weight: bold;
+        }
+
+        /* Скрытая кнопка для тестирования */
+        .test-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0.1;
+            transition: opacity 0.3s;
+            font-size: 18px;
+            color: #d63384;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .test-button:hover {
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .time-unit {
+                min-width: 100px;
+                padding: 15px 10px;
+            }
+            
+            .time-value {
+                font-size: 2.2rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .full-duration {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .timer {
+                gap: 10px;
+            }
+            
+            .time-unit {
+                min-width: 80px;
+                padding: 10px 5px;
+            }
+            
+            .time-value {
+                font-size: 1.8rem;
+            }
+            
+            .time-label {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Статичные сердечки на фоне -->
+    <div class="static-hearts" id="static-hearts"></div>
+    
+    <div class="container">
+        <h1>Таймер до встречи мышонышей</h1>
+        <div class="subtitle">Обратный отсчет до 06.10.2025 22:00</div>
+        
+        <div class="timer-section">
+            <div class="section-title">Обратный отсчет</div>
+            <div class="timer">
+                <div class="time-unit">
+                    <div class="time-value" id="days">00</div>
+                    <div class="time-label">Дней</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="hours">00</div>
+                    <div class="time-label">Часов</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="minutes">00</div>
+                    <div class="time-label">Минут</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="seconds">00</div>
+                    <div class="time-label">Секунд</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="timer-section">
+            <div class="section-title">Полный срок до встречи</div>
+            <div class="full-duration">
+                <div class="duration-unit">
+                    <div class="duration-value" id="total-days">0</div>
+                    <div class="duration-label">Всего дней</div>
+                </div>
+                <div class="duration-unit">
+                    <div class="duration-value" id="total-hours">0</div>
+                    <div class="duration-label">Всего часов</div>
+                </div>
+                <div class="duration-unit">
+                    <div class="duration-value" id="total-minutes">0</div>
+                    <div class="duration-label">Всего минут</div>
+                </div>
+                <div class="duration-unit">
+                    <div class="duration-value" id="total-seconds">0</div>
+                    <div class="duration-label">Всего секунд</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="image-container">
+            <img id="romantic-image" src="https://masterpiecer-images.s3.yandex.net/c13fecf33b8511eea48636f52626dcc9:upscaled" alt="Романтическое изображение">
+        </div>
+        <div class="message" id="message">Встреча состоялась! 💖</div>
+    </div>
+    
+    <!-- Контейнер для анимированных сердечек -->
+    <div class="hearts-container" id="hearts-container"></div>
+    
+    <!-- Скрытая кнопка для тестирования -->
+    <button class="test-button" id="test-button" title="Тестировать завершение таймера">T</button>
+
+    <script>
+        // Целевая дата: 6 октября 2025 года 22:00 (исправлено)
+        const targetDate = new Date('October 6, 2025 22:00:00').getTime();
+        
+        // Элементы обратного отсчета
+        const daysElement = document.getElementById('days');
+        const hoursElement = document.getElementById('hours');
+        const minutesElement = document.getElementById('minutes');
+        const secondsElement = document.getElementById('seconds');
+        
+        // Элементы полного срока
+        const totalDaysElement = document.getElementById('total-days');
+        const totalHoursElement = document.getElementById('total-hours');
+        const totalMinutesElement = document.getElementById('total-minutes');
+        const totalSecondsElement = document.getElementById('total-seconds');
+        
+        // Элементы праздничного отображения
+        const imageContainer = document.getElementById('image-container');
+        const heartsContainer = document.getElementById('hearts-container');
+        const messageElement = document.getElementById('message');
+        const testButton = document.getElementById('test-button');
+        const staticHeartsContainer = document.getElementById('static-hearts');
+        
+        // Создаем статичные сердечки на фоне
+        function createStaticHearts() {
+            const heartCount = 50; // Количество статичных сердечек
+            
+            for (let i = 0; i < heartCount; i++) {
+                const heart = document.createElement('div');
+                heart.classList.add('static-heart');
+                heart.innerHTML = '❤';
+                
+                // Случайная позиция
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.top = Math.random() * 100 + 'vh';
+                
+                // Случайный размер
+                const size = Math.random() * 30 + 20;
+                heart.style.fontSize = size + 'px';
+                
+                // Случайный поворот
+                heart.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                // Случайная прозрачность
+                heart.style.opacity = Math.random() * 0.1 + 0.05;
+                
+                staticHeartsContainer.appendChild(heart);
+            }
+        }
+        
+        // Функция обновления таймера
+        function updateTimer() {
+            const now = new Date().getTime();
+            const timeLeft = targetDate - now;
+            
+            // Если время истекло
+            if (timeLeft < 0) {
+                clearInterval(timerInterval);
+                showCelebration();
+                return;
+            }
+            
+            // Вычисляем оставшееся время для обратного отсчета
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            // Обновляем элементы обратного отсчета
+            daysElement.textContent = days < 10 ? '0' + days : days;
+            hoursElement.textContent = hours < 10 ? '0' + hours : hours;
+            minutesElement.textContent = minutes < 10 ? '0' + minutes : minutes;
+            secondsElement.textContent = seconds < 10 ? '0' + seconds : seconds;
+            
+            // Вычисляем полный срок в разных единицах
+            const totalSeconds = Math.floor(timeLeft / 1000);
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            const totalHours = Math.floor(totalMinutes / 60);
+            const totalDays = Math.floor(totalHours / 24);
+            
+            // Обновляем элементы полного срока
+            totalDaysElement.textContent = totalDays.toLocaleString();
+            totalHoursElement.textContent = totalHours.toLocaleString();
+            totalMinutesElement.textContent = totalMinutes.toLocaleString();
+            totalSecondsElement.textContent = totalSeconds.toLocaleString();
+        }
+        
+        // Функция для показа праздничных элементов
+        function showCelebration() {
+            // Обнуляем таймер
+            daysElement.textContent = '00';
+            hoursElement.textContent = '00';
+            minutesElement.textContent = '00';
+            secondsElement.textContent = '00';
+            
+            // Обнуляем полный срок
+            totalDaysElement.textContent = '0';
+            totalHoursElement.textContent = '0';
+            totalMinutesElement.textContent = '0';
+            totalSecondsElement.textContent = '0';
+            
+            // Показываем изображение и сообщение
+            imageContainer.style.display = 'block';
+            messageElement.style.display = 'block';
+            
+            // Показываем контейнер для анимированных сердечек
+            heartsContainer.style.display = 'block';
+            
+            // Создаем множество анимированных сердечек
+            createAnimatedHearts();
+        }
+        
+        // Функция создания анимированных сердечек
+        function createAnimatedHearts() {
+            const heartCount = 100; // Количество сердечек
+            
+            for (let i = 0; i < heartCount; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.classList.add('heart');
+                    
+                    // Случайный размер
+                    const size = Math.random() * 20 + 10;
+                    heart.style.width = size + 'px';
+                    heart.style.height = size + 'px';
+                    
+                    // Случайная начальная позиция
+                    heart.style.left = Math.random() * 100 + 'vw';
+                    heart.style.top = '-20px';
+                    
+                    // Случайный цвет
+                    const colors = ['#ff6b9d', '#ff8fab', '#ffa7c4', '#ffb7d5'];
+                    heart.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    heart.style.opacity = Math.random() * 0.7 + 0.3;
+                    
+                    // Добавляем сердечко в контейнер
+                    heartsContainer.appendChild(heart);
+                    
+                    // Анимация падения
+                    animateHeart(heart);
+                }, i * 200); // Задержка между созданием сердечек
+            }
+        }
+        
+        // Функция анимации сердечка
+        function animateHeart(heart) {
+            // Случайная скорость падения
+            const duration = Math.random() * 5 + 5;
+            
+            // Анимация падения
+            heart.animate([
+                { transform: 'translateY(0) rotate(45deg)', opacity: heart.style.opacity },
+                { transform: `translateY(100vh) rotate(45deg)`, opacity: 0 }
+            ], {
+                duration: duration * 1000,
+                easing: 'linear'
+            });
+            
+            // Удаляем сердечко после завершения анимации
+            setTimeout(() => {
+                if (heart.parentNode) {
+                    heart.parentNode.removeChild(heart);
+                }
+                
+                // Создаем новое сердечко для бесконечной анимации
+                if (heartsContainer.style.display !== 'none') {
+                    createNewHeart();
+                }
+            }, duration * 1000);
+        }
+        
+        // Функция создания нового сердечка (для бесконечной анимации)
+        function createNewHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            
+            // Случайный размер
+            const size = Math.random() * 20 + 10;
+            heart.style.width = size + 'px';
+            heart.style.height = size + 'px';
+            
+            // Случайная начальная позиция
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.top = '-20px';
+            
+            // Случайный цвет
+            const colors = ['#ff6b9d', '#ff8fab', '#ffa7c4', '#ffb7d5'];
+            heart.style.background = colors[Math.floor(Math.random() * colors.length)];
+            heart.style.opacity = Math.random() * 0.7 + 0.3;
+            
+            // Добавляем сердечко в контейнер
+            heartsContainer.appendChild(heart);
+            
+            // Анимация падения
+            animateHeart(heart);
+        }
+        
+        // Создаем статичные сердечки при загрузке
+        createStaticHearts();
+        
+        // Запускаем таймер
+        const timerInterval = setInterval(updateTimer, 1000);
+        updateTimer(); // Инициализация при загрузке
+        
+        // Обработчик для тестовой кнопки
+        testButton.addEventListener('click', function() {
+            clearInterval(timerInterval);
+            showCelebration();
+        });
+    </script>
+</body>
+</html>
